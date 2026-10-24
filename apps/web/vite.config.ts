@@ -1,4 +1,4 @@
-import { defineConfig, loadEnv } from "vite";
+import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import path from "path";
 import { stripFfmpegPlugin } from "./vite-plugins/strip-ffmpeg";
@@ -28,17 +28,7 @@ function desktopHtmlPlugin() {
   };
 }
 
-// Also honour a monorepo-root .env; apps/web/.env and real env vars take precedence.
-function loadRootEnv(mode: string) {
-  const rootEnv = loadEnv(mode, path.resolve(__dirname, "../.."), "VITE_");
-  for (const [key, value] of Object.entries(rootEnv)) {
-    if (process.env[key] === undefined) process.env[key] = value;
-  }
-}
-
-export default defineConfig(({ mode }) => {
-  loadRootEnv(mode);
-  return {
+export default defineConfig({
   base: isDesktop ? "./" : "/",
   plugins: [react(), desktopHtmlPlugin(), stripFfmpegPlugin(isDesktop), pruneFontsPlugin(isDesktop)],
   assetsInclude: ["**/*.wasm"],
@@ -82,5 +72,4 @@ export default defineConfig(({ mode }) => {
       "Cross-Origin-Embedder-Policy": "require-corp",
     },
   },
-};
 });
