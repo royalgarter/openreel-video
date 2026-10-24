@@ -20,6 +20,12 @@ const initialConnection = {
   apiKey: env.VITE_AI_API_KEY?.trim() || "",
 };
 
+/** Connection values for a provider: env overrides apply only to the provider chosen via env. */
+export function getProviderConnection(provider: AIProvider) {
+  if (provider === initialProvider) return { provider, baseUrl: initialConnection.baseUrl, model: initialConnection.model, apiKey: initialConnection.apiKey };
+  return { provider, ...AI_PROVIDER_DEFAULTS[provider], apiKey: "" };
+}
+
 interface AIConnectionState { provider: AIProvider; baseUrl: string; model: string; apiKey: string; configure: (options: Partial<Pick<AIConnectionState, "provider" | "baseUrl" | "model" | "apiKey">>) => void; forgetKey: () => void }
 /** Intentionally no persistence: keys and connection details stay in this tab. */
 export const useAIConnectionStore = create<AIConnectionState>((set) => ({ ...initialConnection, configure: (options) => set(options), forgetKey: () => set({ apiKey: "" }) }));
