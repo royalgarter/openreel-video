@@ -7,6 +7,16 @@ import { pruneFontsPlugin } from "./vite-plugins/prune-fonts";
 const isDesktop = process.env.OPENREEL_DESKTOP === "1";
 
 function desktopHtmlPlugin() {
+  const aiProxy = aiTarget
+    ? {
+        [aiProxyPath]: {
+          target: aiTarget,
+          changeOrigin: true,
+          secure: true,
+          rewrite: (p: string) => p.slice(aiProxyPath.length),
+        },
+      }
+    : undefined;
   return {
     name: "openreel-desktop-html",
     transformIndexHtml(html: string) {
@@ -40,6 +50,7 @@ function aiProxyTarget(mode: string): string | undefined {
 
 export default defineConfig(({ mode }) => {
   const aiTarget = aiProxyTarget(mode);
+  const aiProxyPath = (loadEnv(mode, __dirname, "VITE_").VITE_AI_PROXY_PATH?.trim() || "/__ai-proxy").replace(/\/+$/, "");
   return {
   base: isDesktop ? "./" : "/",
   plugins: [react(), desktopHtmlPlugin(), stripFfmpegPlugin(isDesktop), pruneFontsPlugin(isDesktop)],
@@ -73,23 +84,15 @@ export default defineConfig(({ mode }) => {
     },
   },
   server: {
-    // Dev-only same-origin proxy so a gateway without CORS headers still works.
-    proxy: aiTarget
-      ? {
-          "/__ai-proxy": {
-            target: aiTarget,
-            changeOrigin: true,
-            secure: true,
-            rewrite: (p: string) => p.replace(/^\/__ai-proxy/, ""),
-          },
-        }
-      : undefined,
+    // Same-origin proxy so a gateway without CORS headers still works (dev and `vite preview`).
+    proxy: aiProxy,
     headers: {
       "Cross-Origin-Opener-Policy": "same-origin",
       "Cross-Origin-Embedder-Policy": "require-corp",
     },
   },
   preview: {
+    proxy: aiProxy,
     headers: {
       "Cross-Origin-Opener-Policy": "same-origin",
       "Cross-Origin-Embedder-Policy": "require-corp",
