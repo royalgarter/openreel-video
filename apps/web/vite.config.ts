@@ -7,16 +7,6 @@ import { pruneFontsPlugin } from "./vite-plugins/prune-fonts";
 const isDesktop = process.env.OPENREEL_DESKTOP === "1";
 
 function desktopHtmlPlugin() {
-  const aiProxy = aiTarget
-    ? {
-        [aiProxyPath]: {
-          target: aiTarget,
-          changeOrigin: true,
-          secure: true,
-          rewrite: (p: string) => p.slice(aiProxyPath.length),
-        },
-      }
-    : undefined;
   return {
     name: "openreel-desktop-html",
     transformIndexHtml(html: string) {
@@ -51,6 +41,16 @@ function aiProxyTarget(mode: string): string | undefined {
 export default defineConfig(({ mode }) => {
   const aiTarget = aiProxyTarget(mode);
   const aiProxyPath = (loadEnv(mode, __dirname, "VITE_").VITE_AI_PROXY_PATH?.trim() || "/__ai-proxy").replace(/\/+$/, "");
+  const aiProxy = aiTarget
+    ? {
+        [aiProxyPath]: {
+          target: aiTarget,
+          changeOrigin: true,
+          secure: true,
+          rewrite: (p: string) => p.slice(aiProxyPath.length),
+        },
+      }
+    : undefined;
   return {
   base: isDesktop ? "./" : "/",
   plugins: [react(), desktopHtmlPlugin(), stripFfmpegPlugin(isDesktop), pruneFontsPlugin(isDesktop)],
